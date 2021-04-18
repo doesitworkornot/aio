@@ -6,11 +6,12 @@ CREATE TABLE tel_user (id INT, name VARCHAR(40), status INT, telegram_id INT, PR
 
 Бот конфигурируется с помощью файла bot.ini, который вы должны сделать на основе bot.ini.example, указав в нем ваш токен доступа, параметры подключения к серверу MySQL и user_id пользователя,
 у которого будут права админа и он сможет редактировать список пользователей.
--авпва
--ывапывап
+- авпва
+- ывапывап
                                   
 Бот в котором продемонстрирована работа aiogram
 ## Вдохновляли и помогали
 
- [Книга по написанию ботов для Telegram на языке Python](https://mastergroosha.github.io/telegram-tutorial-2/) моей книги по написанию ботов для Telegram на языке Python. 
+- [Книга по написанию ботов для Telegram на языке Python](https://mastergroosha.github.io/telegram-tutorial-2/)
+-  моей книги по написанию ботов для Telegram на языке Python. 
  щщщщ
