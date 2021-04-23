@@ -23,7 +23,7 @@ CREATE TABLE tel_user (id INT, name VARCHAR(40), status INT, telegram_id INT, PR
 ## Вдохновляли и помогали
 
 - [Книга по написанию ботов для Telegram на языке Python](https://mastergroosha.github.io/telegram-tutorial-2/)
-- Веселые ребята из группы [aiogram ru](https://t.me/aiogram_ru)
+- Чат [aiogram ru](https://t.me/aiogram_ru)
 - [Видеоуроки Кости](https://www.youtube.com/c/PhysicsisSimple/videos)
 - [Шаблон](https://github.com/Tishka17/tgbot_template), взятый за основу и личные советы его автора
- 
+- [pep8](https://www.python.org/dev/peps/pep-0008)
