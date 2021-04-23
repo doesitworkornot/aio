@@ -2,30 +2,41 @@ from typing import List
 from tgbot.models.temp_test import TestUser
 
 class Repo:
-    """Db abstraction layer"""
+    """MySQL database abstraction layer"""
 
     def __init__(self, conn):
         self.conn = conn
 
-    # users
-    async def add_user(self, data) -> None:
-        """Store user in DB, ignore duplicates"""
-        async with self.conn.cursor() as cur:
-            await cur.execute(f'INSERT INTO tel_user (name, status, telegram_id) VALUES("{data["name"]}","{data["status"]}","{data["telegram_id"]}")')
-            await self.conn.commit()
-        return
+    async def add_user(self, name, status, telegram_id, **kwargs) -> None:
+        """Store user in DB"""
 
+        sql = '''
+            INSERT INTO tel_user (name, status, telegram_id)
+            VALUES(%s, %s, %s)
+            '''
+        async with self.conn.cursor() as cur:
+            await cur.execute(sql, [name, status, telegram_id])
+            await self.conn.commit()
 
     async def del_user(self, db_user_id) -> None:
-        """Store user in DB, ignore duplicates"""
-        async with self.conn.cursor() as cur:
-            await cur.execute(f' DELETE FROM tel_user WHERE id = "{db_user_id}" ')
-            await self.conn.commit()
-        return
+        """Delete user from DB"""
 
+        sql = '''
+            DELETE FROM tel_user WHERE id = %s
+            '''
+        async with self.conn.cursor() as cur:
+            await cur.execute(sql, db_user_id)
+            await self.conn.commit()
 
     async def list_users(self) -> List[TestUser]:
-        sql = TestUser.__select__
+        '''Selects list of users'''
+
+        sql = '''
+            SELECT
+                id, name, status, telegram_id
+            FROM
+                tel_user
+            '''
         async with self.conn.cursor() as cur:
             await cur.execute(sql)
             return await cur.fetchall()

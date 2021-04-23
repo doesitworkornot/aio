@@ -2,156 +2,222 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from aiogram.types import Message, ParseMode, ReplyKeyboardRemove, ReplyKeyboardMarkup
-import aiogram.utils.markdown as md
+from aiogram.types import Message, ParseMode
+#import aiogram.utils.markdown as md
 
 from tgbot.models.role import UserRole
 from tgbot.services.repository import Repo
 
+from .dialog import DialogBaseTemplate
 
-# States
+
 class AddUserDialog(StatesGroup):
     get_forwarded_message = State()
-    set_status = State()
+    status = State()
     submit = State()
+
 
 class DelUserDialog(StatesGroup):
-    set_id = State()
+    db_id = State()
     submit = State()
 
-def get_int(str):
-    try:
-        r = int(str)
-        return r
-    except ValueError:
-        return 0
+
+class AddUserProc(DialogBaseTemplate):
+    """/adduser unique dialog instructions"""
+
+    def __init__(self, fsm, fsm_group, rules={} ):
+        super().__init__(self, fsm, fsm_group )
+        self.fsm = fsm
+        self.fsm_group = fsm_group
+        self.rules = {
+            'get_forwarded_message': {
+                'question': (
+                    'Для добавления пользователя в базу перешлите мне'
+                        ' сообщение от него. Если в нем не будет'
+                        ' поля "forward_from" - напишите telegram user_id',
+                    'Перешлите мне сообщение с полем "forward_from"'
+                        ' или напишите telegram user_id!',),
+                'test': self.get_forwarded_message_test,
+                'calc': self.get_forwarded_message_calc,
+                'after_answer': self.default_after_answer_proc,
+            },
+            'status': {
+                'question': ('Укажите статус пользователя (от 1 до 5)', ),
+                'test': self.status_test,
+                'after_answer': self.default_after_answer_proc,
+            },
+            'submit': {
+                'question': ('Подтвердите введенные данные:', ),
+                'keyboard': self.KEYBOARD_APPROVE,
+                'test': self.has_approve_answer,
+                'after_question': self.submit_after_question_proc,
+                'after_answer': self.submit_after_answer_proc,
+            },
+        } | rules
+
+    def get_forwarded_message_test(self, message):
+        if self.has_forward_from(message) == 0:
+            return 0
+        return self.is_int(message, from_=1, to_=2000000000)
+
+    def status_test(self, message):
+        return self.is_int(message, from_=1, to_=5)
+
+    def get_forwarded_message_calc(self, message):
+        if self.has_forward_from(message) == 0:
+            user = message.forward_from
+            return {
+                'telegram_id': user.id,
+                'name': user.username if user.username else ''}
+        return {'telegram_id': message.text, 'name': ''}
+
+    def submit_after_question_proc(self, data):
+        return (
+            f"Telegram user_id: {data.get('telegram_id', '')}\n"
+            f"Username: {data.get('name', '')}\n"
+            f"Статус: {data.get('status', '')}\n")
+
+    async def submit_after_answer_proc(self, m, state, repo, **notused):
+        data = await state.get_data()
+        if data.get('submit', '') == 'Подтверждаю':
+            await repo.add_user(**data)
+            mes_text = 'Пользователь добавлен в базу'
+        else:
+            mes_text = 'Пользователь НЕ добавлен в базу'
+        await m.answer(mes_text, reply_markup=self.KEYBOARD_REMOVE)
+
+    async def default_after_answer_proc(self, m, answer_data,  **notused):
+        await m.answer(f"Ok. {answer_data}")
 
 
-async def do_cancel(m: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state is None:
-        return
-    await state.finish()
-    await m.answer("Процедура ввода пользователя прервана...Удачи!", reply_markup=ReplyKeyboardRemove())
+class DelUserProc(DialogBaseTemplate):
+    """/deluser unique dialog instructions"""
+
+    def __init__(self, fsm, fsm_group, rules={} ):
+        super().__init__(self, fsm, fsm_group )
+        self.fsm = fsm
+        self.fsm_group = fsm_group
+        self.rules = {
+            'db_id': {
+                'question': ('Для удаления пользователя из базы напишите мне его id', ),
+                'test': self.is_int,
+            },
+            'submit': {
+                'question': ('Подтвердите удаление пользователя', ),
+                'keyboard': self.KEYBOARD_APPROVE,
+                'test': self.has_approve_answer,
+                'after_question': self.submit_after_question_proc,
+                'after_answer': self.submit_after_answer_proc,
+            },
+        } | rules
+
+    def submit_after_question_proc(self, data):
+        return (f"id пользователя: {data.get('db_id', '')}")
+
+    async def submit_after_answer_proc(self, m, state, repo, **notused):
+        data = await state.get_data()
+        if data.get('submit', '') == 'Подтверждаю':
+            await repo.del_user(data['db_id'])
+            mes_text = 'Пользователь удален'
+        else:
+            mes_text = 'Пользователь НЕ удален'
+
+        await m.answer(mes_text, reply_markup=self.KEYBOARD_REMOVE)
 
 
-async def show_current_state(m: Message, state: FSMContext):
-    currentState = await state.get_state()
-    await m.reply(f'Текущее состояние диалога: {currentState}')
+# Место, за которое стыдно... но я пока ничего красивее не придумал
+dialogs = {
+    'AddUserDialog': AddUserProc(AddUserDialog, 'AddUserDialog'),
+    'DelUserDialog': DelUserProc(DelUserDialog, 'DelUserDialog'),
+}
 
 
 async def adduser_start(m: Message, state: FSMContext):
-    await AddUserDialog.get_forwarded_message.set()
-    await m.answer("Для добавления пользователя в базу перешлите мне сообщение от него. Если в нем не будет поля 'forward_from' ... то я пока не знаю, что делать...")
+    dialog = dialogs['AddUserDialog']
+    await dialog.next_step()
+    await first_question(m, state, dialog)
 
 
-async def process_forwarded_message(m: Message, state: FSMContext):
-    if not m.forward_from :
-        await m.answer("ПОВТОРЯЮ! Для добавления пользователя в базу перешлите мне сообщение от него. Если в нем нет поля 'forward_from' ... то я не знаю, что делать...")
+async def deluser_start(m: Message, state: FSMContext):
+    dialog = dialogs['DelUserDialog']
+    await dialog.next_step()
+    await first_question(m, state, dialog)
+
+
+async def first_question(m, state, dialog):
+    current_step = await state.get_state()
+    if current_step:
+        dialog.set_state(current_step)
+        await m.answer(dialog.question_text(), reply_markup=dialog.keyboard())
+
+
+async def do_dialog(m: Message, state: FSMContext, repo: Repo):
+    current_step = await state.get_state()
+    dialog = dialogs[current_step.split(':')[0]]
+    dialog.process_current_step(current_step, m)
+
+    if not dialog.ready_to_next_step():
+        await m.reply(dialog.question_text())
         return
 
-    await AddUserDialog.next()
-    async with state.proxy() as data:
-        data['telegram_id'] = m.forward_from.id
-        data['name'] = m.forward_from.username
-    await m.answer(f'Ok. Сообщение переслано от пользователя с id: {m.forward_from.id}')
-    await m.answer("Введите статус пользователя (любое число)")
+    answer_data = dialog.get_answer_result()
+    await state.update_data(**answer_data)
 
+    if dialog.has_after_answer_proc():
+        await dialog.after_answer_proc(m=m,
+            state=state, repo=repo, answer_data=answer_data)
 
-async def process_set_status(m: Message, state: FSMContext):
-    await AddUserDialog.next()
-    async with state.proxy() as data:
-        data['status'] = get_int(m.text)
+    await dialog.next_step()
 
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.insert('Подтверждаю')
-    markup.insert('Отменить')
-    await m.reply(f'Ok. Установлен статус: {data["status"]}')
-    await m.answer('Подтвердите введенные данные', reply_markup=markup)
-    await sendCollectedData(m, data, state)
+    current_step = await state.get_state()
+    if not current_step:
+        return
 
-
-async def sendCollectedData(m: Message, data, state):
-    return await m.answer(
-        f'''Telegram user_id: {data["telegram_id"]}
-Username: `{data["name"]}`
-Статус: {data["status"]}
-        ''' )
-
-async def process_submit(m: Message, state: FSMContext, repo: Repo):
-    if m.text == 'Подтверждаю' :
-        async with state.proxy() as data:
-            await repo.add_user(data)
-        mes_text = 'Пользователь добавлен в базу:'
-    else:
-        mes_text = 'Пользователь НЕ добавлен в базу'
-
-    await m.answer(mes_text, reply_markup=ReplyKeyboardRemove())
-    await state.finish()
+    await first_question(m, state, dialog)
+    if dialog.has_after_question_proc():
+        data = await state.get_data()
+        await m.answer(dialog.after_question_proc(data))
 
 
 async def any_message(m: Message):
     user = m.from_user
-    await m.answer(f'Привет, админ! {user.first_name} {user.last_name}! (@{user.username}, id: {user.id})')
-    await m.answer('''/adduser - добавить пользователя в БД
-/showuser - посмотреть список пользователей
-/deluser - удалить пользователя из БД
-/state - текущее состояние диалога от FSM
-cancel - прервать текущую процедуру (диалог)'''
+    await m.answer(f"Привет, админ! {user.first_name} {user.last_name}! (@{user.username}, id: {user.id})")
+    await m.answer(
+        '/adduser - добавить пользователя в БД\n'
+        '/showuser - посмотреть список пользователей\n'
+        '/deluser - удалить пользователя из БД\n'
+        '/state - текущее состояние диалога от FSM\n'
+        'cancel - прервать текущую процедуру (диалог)'
     )
 
 
 async def showuser(m: Message, repo: Repo):
-    some_thing = await repo.list_users()
-    await m.answer(f'Список пользователей: {some_thing[0:]}')
-
-async def deluser_start(m: Message, state: FSMContext):
-    await DelUserDialog.set_id.set()
-    await m.answer("Для удаления пользователя из базы напишите мне его id")
-
-async def deluser_set_id(m: Message, state: FSMContext):
-    try:
-        userid = int(m.text)
-    except ValueError:
-        await m.reply(f'Надо ввести число')
-        return False
-
-    await DelUserDialog.next()
-    async with state.proxy() as data:
-        data['userid'] = userid
-
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add('Подтверждаю','Отменить')
-    await m.reply(f'Ok. Вы собираетесь удалить пользователя с id: {data["userid"]}')
-    await m.answer('Подтвердите удаление', reply_markup=markup)
+    userlist = await repo.list_users()
+    await m.answer(f"Список пользователей: {userlist}")
 
 
-async def deluser_submit(m: Message, state: FSMContext, repo: Repo):
-    if m.text == 'Подтверждаю' :
-        async with state.proxy() as data:
-            await repo.del_user(data['userid'])
-        mes_text = 'Пользователь удален'
-    else:
-        mes_text = 'Пользователь НЕ удален'
+async def show_current_state(m: Message, state: FSMContext):
+    currentState = await state.get_state()
+    await m.answer(f"Cостояние текущего процесса: {currentState}")
 
-    await m.answer(mes_text, reply_markup=ReplyKeyboardRemove())
+
+async def do_cancel(m: Message, state: FSMContext):
     await state.finish()
+    await m.answer('Текущий процесс прерван...Удачи!',
+                           reply_markup=DialogBaseTemplate.KEYBOARD_REMOVE)
+
+
+async def nope(a):
+    pass
 
 
 def register_admin(dp: Dispatcher):
-    dp.register_message_handler(any_message, commands=["start"], is_admin=True)
-    dp.register_message_handler(adduser_start, commands=["adduser"], is_admin=True)
-    dp.register_message_handler(showuser, commands=["showuser"], is_admin=True)
-    dp.register_message_handler(deluser_start, commands=["deluser"], is_admin=True)
-    # # or you can pass multiple roles:
-    # dp.register_message_handler(admin_start, commands=["start"], state="*", role=[UserRole.ADMIN])
-    # # or use another filter:
-    # dp.register_message_handler(admin_start, commands=["start"], state="*", is_admin=True)
-    dp.register_message_handler(do_cancel, text=["cancel"], state="*", is_admin=True)
-    dp.register_message_handler(show_current_state, state="*", commands=["state"], is_admin=True)
-    dp.register_message_handler(process_forwarded_message, state=AddUserDialog.get_forwarded_message, is_admin=True)
-    dp.register_message_handler(process_set_status, state=AddUserDialog.set_status, is_admin=True)
-    dp.register_message_handler(process_submit, state=AddUserDialog.submit, is_admin=True)
-    dp.register_message_handler(deluser_set_id, state=DelUserDialog.set_id, is_admin=True)
-    dp.register_message_handler(deluser_submit, state=DelUserDialog.submit, is_admin=True)
-    dp.register_message_handler(any_message, is_admin=True)
+    dp.register_message_handler(any_message, commands=['start', 'help'], is_admin=True)
+    dp.register_message_handler(adduser_start, commands=['adduser'], is_admin=True)
+    dp.register_message_handler(deluser_start, commands=['deluser'], is_admin=True)
+    dp.register_message_handler(showuser, commands=['showuser'], is_admin=True)
+    dp.register_message_handler(show_current_state, commands=['state'], state='*', is_admin=True)
+    dp.register_message_handler(nope, text=['cancel','A','А'], state=None, is_admin=True)
+    dp.register_message_handler(do_cancel, text=['cancel','A','А'], state='*', is_admin=True)
+    dp.register_message_handler(any_message, state=None, is_admin=True)
+    dp.register_message_handler(do_dialog, state='*',is_admin=True)

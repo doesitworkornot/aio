@@ -1,4 +1,5 @@
 import asyncio
+import aiomysql
 import logging
 
 from aiogram import Bot, Dispatcher
@@ -12,23 +13,25 @@ from tgbot.handlers.user import register_user
 from tgbot.middlewares.db import DbMiddleware
 from tgbot.middlewares.role import RoleMiddleware
 
+
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+)
 
-import aiomysql
 
-async def create_pool(user, password, database, host, echo,loop):
-    db = await aiomysql.create_pool(user=user, password=password, db=database, host=host, port=3306, use_unicode=True, charset='utf8', loop=loop)
+async def create_pool(user, password, database, host, loop):
+    db = await aiomysql.create_pool(
+        user=user, password=password, db=database,
+        host=host, port=3306, use_unicode=True, charset='utf8', loop=loop)
     return db
     #raise NotImplementedError  # TODO check your db connector
 
 
 async def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    )
-    logger.error("Starting bot")
-    config = load_config("bot.ini")
+    logger.error('Starting bot')
+    config = load_config('bot.ini')
 
     if config.tg_bot.use_redis:
         storage = RedisStorage()
@@ -41,7 +44,6 @@ async def main():
         password=config.db.password,
         database=config.db.database,
         host=config.db.host,
-        echo=False,
         loop=loop,
     )
 
