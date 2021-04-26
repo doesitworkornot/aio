@@ -1,12 +1,15 @@
+import logging
 from aiogram import Dispatcher
 from aiogram.types import Message
 
 from tgbot.models.role import UserRole
 from tgbot.services.repository import Repo
 
+log = logging.getLogger(__name__)
 
 async def user_start(m: Message, repo: Repo):
-    #await repo.add_user(m.from_user.id)
+    log.info('/start by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.reply("Hello, user!")
 
 

@@ -1,5 +1,5 @@
 from typing import List
-from tgbot.models.temp_test import TestUser
+from tgbot.models.test_user import TestUser
 
 class Repo:
     """MySQL database abstraction layer"""

@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -130,9 +132,12 @@ dialogs = {
     'AddUserDialog': AddUserProc(AddUserDialog, 'AddUserDialog'),
     'DelUserDialog': DelUserProc(DelUserDialog, 'DelUserDialog'),
 }
+log = logging.getLogger(__name__)
 
 
 async def adduser_start(m: Message, state: FSMContext):
+    log.info('adduser_start by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     dialog = dialogs['AddUserDialog']
     await dialog.next_step()
     await first_question(m, state, dialog)
