@@ -21,16 +21,15 @@ logging.basicConfig(
 )
 
 
-async def create_pool(user, password, database, host, loop):
+async def create_pool(user, password, database, host, loop, port):
     db = await aiomysql.create_pool(
         user=user, password=password, db=database,
-        host=host, port=3306, use_unicode=True, charset='utf8', loop=loop)
+        host=host, port=port, use_unicode=True, charset='utf8', loop=loop)
     return db
-    #raise NotImplementedError  # TODO check your db connector
 
 
 async def main():
-    logger.error('Starting bot')
+    logger.info('Starting bot')
     config = load_config('bot.ini')
 
     if config.tg_bot.use_redis:
@@ -44,8 +43,10 @@ async def main():
         password=config.db.password,
         database=config.db.database,
         host=config.db.host,
+        port=int(config.db.port),
         loop=loop,
     )
+
 
     bot = Bot(token=config.tg_bot.token)
     dp = Dispatcher(bot, storage=storage)
@@ -61,8 +62,13 @@ async def main():
     try:
         await dp.start_polling()
     finally:
+        await dp.storage.close()
+        await dp.storage.wait_closed()
         await bot.close()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.error("Bot stopped!")

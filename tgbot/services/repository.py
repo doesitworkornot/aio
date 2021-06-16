@@ -1,5 +1,4 @@
 from typing import List
-from tgbot.models.test_user import TestUser
 
 class Repo:
     """MySQL database abstraction layer"""
@@ -27,16 +26,3 @@ class Repo:
         async with self.conn.cursor() as cur:
             await cur.execute(sql, db_user_id)
             await self.conn.commit()
-
-    async def list_users(self) -> List[TestUser]:
-        '''Selects list of users'''
-
-        sql = '''
-            SELECT
-                id, name, status, telegram_id
-            FROM
-                tel_user
-            '''
-        async with self.conn.cursor() as cur:
-            await cur.execute(sql)
-            return await cur.fetchall()

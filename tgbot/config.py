@@ -8,7 +8,8 @@ class DbConfig:
     password: str
     user: str
     database: str
-    port: int
+    port: str
+
 
 
 @dataclass
