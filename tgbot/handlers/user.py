@@ -14,7 +14,12 @@ class User_states(StatesGroup):
 
 
 async def user_start(m: Message):
-    await m.reply('Hello, dear user! What do you want?', reply_markup=kb.inline_kb_full)
+    await m.reply('Hello, dear user! What do you want? Something usuall? Or want to get some mental support via /help', reply_markup=kb.inline_kb_full)
+
+
+async def help_me(m: Message):
+    await m.bot.send_message(text='Help text', chat_id = m.message.chat.id)
+
 
 
 async def cancel(m: Message, state: FSMContext):
@@ -34,6 +39,8 @@ async def info(m: Message):
 
 def register_user(dp: Dispatcher):
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
+                                role=UserRole.USER)
+    dp.register_message_handler(help_me, commands=['help'], state='*',
                                 role=UserRole.USER)
     dp.register_callback_query_handler(print_q, text=['print'],
                                        role=UserRole.USER)

@@ -29,7 +29,11 @@ async def info(m: Message):
 
 
 async def admin_start(m: Message):
-    await m.reply('Hello, dear admin! What do you want?', reply_markup=kb.inline_kb_full)
+    await m.reply('Hello, dear admin! What do you want? If u dont know so lets just start with /help', reply_markup=kb.inline_kb_full)
+
+
+async def help_me(m: Message):
+    await m.bot.send_message(text='Help text', chat_id = m.message.chat.id)
 
 
 async def show_current_state(m: Message, state: FSMContext):
@@ -39,6 +43,8 @@ async def show_current_state(m: Message, state: FSMContext):
 
 def register_admin(dp: Dispatcher):
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(help_me, commands=['help'], state='*',
                                 role=UserRole.ADMIN)
     dp.register_callback_query_handler(print_q, text=['print'],
                                        role=UserRole.ADMIN)
