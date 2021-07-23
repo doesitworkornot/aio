@@ -23,12 +23,12 @@ async def cancel(m: Message, state: FSMContext):
 
 
 async def print_q(m: Message):
-    await m.answer('You gonna print smth.')
+    await m.bot.send_message(text='You gonna print smth.', chat_id = m.message.chat.id)
     await User_states.print.set()
 
 
 async def info(m: Message):
-    await m.answer('You gonna recieve ur data.')
+    await m.bot.send_message(text='You gonna recieve ur data.', chat_id = m.message.chat.id)
     await User_states.info.set()
 
 

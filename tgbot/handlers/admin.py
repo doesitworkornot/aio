@@ -5,16 +5,12 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 from tgbot.models.role import UserRole
+import tgbot.handlers.kb as kb
 
 
 class Admin_states(StatesGroup):
-    first = State()
-    second = State()
-
-
-async def admin_start(m: Message):
-    await m.reply('Hello, dear admin! Want to know ur state?')
-    await Admin_states.first.set()
+    print = State()
+    info = State()
 
 
 async def cancel(m: Message, state: FSMContext):
@@ -22,9 +18,18 @@ async def cancel(m: Message, state: FSMContext):
     await m.reply('Just removed your state. Now you are clean')
 
 
-async def state_one(m: Message):
-    await m.reply('Anyway. You are on first position.')
-    await Admin_states.second.set()
+async def print_q(m: Message):
+    await m.bot.send_message(text='You gonna print smth.', chat_id = m.message.chat.id)
+    await Admin_states.print.set()
+
+
+async def info(m: Message):
+    await m.bot.send_message(text='You gonna recieve ur data.', chat_id = m.message.chat.id)
+    await Admin_states.info.set()
+
+
+async def admin_start(m: Message):
+    await m.reply('Hello, dear admin! What do you want?', reply_markup=kb.inline_kb_full)
 
 
 async def show_current_state(m: Message, state: FSMContext):
@@ -35,7 +40,10 @@ async def show_current_state(m: Message, state: FSMContext):
 def register_admin(dp: Dispatcher):
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
                                 role=UserRole.ADMIN)
-    dp.register_message_handler(state_one, state=Admin_states.first)
+    dp.register_callback_query_handler(print_q, text=['print'],
+                                       role=UserRole.ADMIN)
+    dp.register_callback_query_handler(info, text=['info'],
+                                       role=UserRole.ADMIN)
     dp.register_message_handler(show_current_state, commands=['state'],
                                 state='*', role=UserRole.ADMIN)
     dp.register_message_handler(admin_start, state='*',
