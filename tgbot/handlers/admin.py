@@ -33,7 +33,7 @@ async def admin_start(m: Message):
 
 
 async def help_me(m: Message):
-    await m.bot.send_message(text='Help text', chat_id = m.message.chat.id)
+    await m.bot.send_message(text='Short explanation.\n \n That bot is about printing files on school printer. \n Command list: /help - now you are here \n /cancel - aborting any acton \n /state - is showing to you current state in ur chat \n /start - starting dialog', chat_id = m.message.chat.id)
 
 
 async def show_current_state(m: Message, state: FSMContext):

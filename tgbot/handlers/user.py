@@ -18,7 +18,7 @@ async def user_start(m: Message):
 
 
 async def help_me(m: Message):
-    await m.bot.send_message(text='Help text', chat_id = m.message.chat.id)
+    await m.bot.send_message(text='Hello, User. This bot is about printing files on school printer \n Default commands: \n /start - starting main dialog \n /help - now you are here \n /cancel - nullification of your dialog state', chat_id = m.message.chat.id)
 
 
 
