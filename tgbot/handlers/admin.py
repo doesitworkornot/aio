@@ -28,6 +28,14 @@ async def info(m: Message):
     await Admin_states.info.set()
 
 
+async def add_user(m: Message):
+    await m.reply('U gonna add new user')
+
+
+async def del_user(m: Message):
+    await m.reply('U gonna delete user')
+
+
 async def admin_start(m: Message):
     await m.reply('Hello, dear admin! What do you want? If u dont know so lets just start with /help', reply_markup=kb.inline_kb_full)
 
@@ -45,6 +53,10 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
                                 role=UserRole.ADMIN)
     dp.register_message_handler(help_me, commands=['help'], state='*',
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(add_user, commands=['add'], state='*',
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(del_user, commands=['del'], state='*',
                                 role=UserRole.ADMIN)
     dp.register_callback_query_handler(print_q, text=['print'],
                                        role=UserRole.ADMIN)
