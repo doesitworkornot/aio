@@ -31,7 +31,7 @@ async def create_pool(user, password, database, host, loop, port):
 async def main():
     logger.info('Starting bot')
     config = load_config('bot.ini')
-
+    
     if config.tg_bot.use_redis:
         storage = RedisStorage()
     else:

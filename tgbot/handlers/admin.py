@@ -8,10 +8,26 @@ from tgbot.models.role import UserRole
 import tgbot.handlers.kb as kb
 
 
-class Admin_states(StatesGroup):
-    print = State()
-    info = State()
+'''########################################
+                States
+########################################'''
 
+class Admin_printer(StatesGroup):
+    pages = State()
+    confirm = State()
+
+
+class Admin_adding_user(StatesGroup):
+    user_id = State()
+    user_name = State()
+    user_role = State()
+    confirm = State()
+
+
+
+'''########################################
+                Handlers
+########################################'''
 
 async def cancel(m: Message, state: FSMContext):
     await state.finish()
@@ -19,17 +35,17 @@ async def cancel(m: Message, state: FSMContext):
 
 
 async def print_q(m: Message):
-    await m.bot.send_message(text='You gonna print smth.', chat_id = m.message.chat.id)
-    await Admin_states.print.set()
+    await m.bot.send_message(text='How much copies you want to print?.', chat_id = m.message.chat.id)
+    await Admin_printer.pages.set()
 
 
 async def info(m: Message):
     await m.bot.send_message(text='You gonna recieve ur data.', chat_id = m.message.chat.id)
-    await Admin_states.info.set()
 
 
-async def add_user(m: Message):
-    await m.reply('U gonna add new user')
+async def add_user(m: Message, state: FSMContext):
+    await m.reply('Resend to me message from new user. So i could recieve new user id. Or just send me new id.')
+    await Admin_adding_user.user_id.set()
 
 
 async def del_user(m: Message):
@@ -49,20 +65,25 @@ async def show_current_state(m: Message, state: FSMContext):
     await m.answer(f"Current state is: {currentState}")
 
 
+
+'''########################################
+                Main Handler
+########################################'''
+
 def register_admin(dp: Dispatcher):
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
                                 role=UserRole.ADMIN)
-    dp.register_message_handler(help_me, commands=['help'], state='*',
+    dp.register_message_handler(show_current_state, commands=['state'],
+                                state='*', role=UserRole.ADMIN)
+    dp.register_message_handler(help_me, commands=['help'], state=None,
                                 role=UserRole.ADMIN)
-    dp.register_message_handler(add_user, commands=['add'], state='*',
+    dp.register_message_handler(add_user, commands=['add'], state=None,
                                 role=UserRole.ADMIN)
-    dp.register_message_handler(del_user, commands=['del'], state='*',
+    dp.register_message_handler(del_user, commands=['del'], state=None,
                                 role=UserRole.ADMIN)
     dp.register_callback_query_handler(print_q, text=['print'],
                                        role=UserRole.ADMIN)
     dp.register_callback_query_handler(info, text=['info'],
                                        role=UserRole.ADMIN)
-    dp.register_message_handler(show_current_state, commands=['state'],
-                                state='*', role=UserRole.ADMIN)
-    dp.register_message_handler(admin_start, state='*',
+    dp.register_message_handler(admin_start, state=None,
                                 commands=['start'], role=UserRole.ADMIN)
