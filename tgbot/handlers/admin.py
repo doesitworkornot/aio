@@ -63,6 +63,18 @@ async def add_user(m: Message, state: FSMContext):
     await Admin_adding_user.user_id.set()
 
 
+async def new_user_id(m: Message, state: FSMContext):
+    print(m)
+    if m.forward_from != None:
+        new_id = m.forward_from.id
+        await m.bot.send_message(text=f'You gonna add user wit id: {new_id}.', chat_id=m.chat.id)
+    elif m.text.isdigit():
+        new_id = m.text
+        await m.bot.send_message(text=f'You gonna add user wit id: {new_id}.', chat_id=m.chat.id)
+    else:
+        await m.bot.send_message(text='You failed. Try again. Or new user could set private forwarded message in settings, so ask him to send you his id', chat_id=m.chat.id)
+
+
 async def del_user(m: Message):
     log.info('deleting user by %s(username) %s(first_name) id%s' %
         (m.from_user.username, m.from_user.first_name, m.from_user.id))
@@ -90,10 +102,10 @@ async def show_current_state(m: Message, state: FSMContext):
 ########################################'''
 
 def register_admin(dp: Dispatcher):
-    ### Absolute annihilation
+    ### Absolute Annihilation
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
                                 role=UserRole.ADMIN)
-    ### Current state
+    ### Current State
     dp.register_message_handler(show_current_state, commands=['state'],
                                 state='*', role=UserRole.ADMIN)
 
@@ -105,6 +117,10 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(del_user, commands=['del'], state=None,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(admin_start, commands=['start'],state=None,
+                                role=UserRole.ADMIN)
+
+    ### Adding User Handlers
+    dp.register_message_handler(new_user_id, state=Admin_adding_user.user_id,
                                 role=UserRole.ADMIN)
 
     ### Callbacks
