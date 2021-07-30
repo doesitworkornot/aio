@@ -90,19 +90,25 @@ async def show_current_state(m: Message, state: FSMContext):
 ########################################'''
 
 def register_admin(dp: Dispatcher):
+    ### Absolute annihilation
     dp.register_message_handler(cancel, commands=['cancel'], state='*',
                                 role=UserRole.ADMIN)
+    ### Current state
     dp.register_message_handler(show_current_state, commands=['state'],
                                 state='*', role=UserRole.ADMIN)
+
+    ### State None Commands
     dp.register_message_handler(help_me, commands=['help'], state=None,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(add_user, commands=['add'], state=None,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(del_user, commands=['del'], state=None,
                                 role=UserRole.ADMIN)
+    dp.register_message_handler(admin_start, commands=['start'],state=None,
+                                role=UserRole.ADMIN)
+
+    ### Callbacks
     dp.register_callback_query_handler(print_q, text=['print'],
                                        role=UserRole.ADMIN)
     dp.register_callback_query_handler(info, text=['info'],
                                        role=UserRole.ADMIN)
-    dp.register_message_handler(admin_start, state=None,
-                                commands=['start'], role=UserRole.ADMIN)
