@@ -8,6 +8,13 @@ from tgbot.models.role import UserRole
 import tgbot.handlers.kb as kb
 
 
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
+
 '''########################################
                 States
 ########################################'''
@@ -30,25 +37,35 @@ class Admin_adding_user(StatesGroup):
 ########################################'''
 
 async def cancel(m: Message, state: FSMContext):
+    log.info('canceled state %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await state.finish()
     await m.reply('Just removed your state. Now you are clean')
 
 
 async def print_q(m: Message):
+    log.info('starting print f() by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.bot.send_message(text='How much copies you want to print?.', chat_id = m.message.chat.id)
     await Admin_printer.pages.set()
 
 
 async def info(m: Message):
+    log.info('getting info by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.bot.send_message(text='You gonna recieve ur data.', chat_id = m.message.chat.id)
 
 
 async def add_user(m: Message, state: FSMContext):
+    log.info('adding user by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.reply('Resend to me message from new user. So i could recieve new user id. Or just send me new id.')
     await Admin_adding_user.user_id.set()
 
 
 async def del_user(m: Message):
+    log.info('deleting user by %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.reply('U gonna delete user')
 
 
@@ -61,6 +78,8 @@ async def help_me(m: Message):
 
 
 async def show_current_state(m: Message, state: FSMContext):
+    log.info('showing state to %s(username) %s(first_name) id%s' %
+        (m.from_user.username, m.from_user.first_name, m.from_user.id))
     currentState = await state.get_state()
     await m.answer(f"Current state is: {currentState}")
 
