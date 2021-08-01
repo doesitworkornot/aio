@@ -5,6 +5,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 from tgbot.models.role import UserRole
+from tgbot.services.repository import Repo
 import tgbot.handlers.kb as kb
 
 
@@ -81,23 +82,32 @@ async def new_user_id(m: Message, state: FSMContext):
 async def new_user_name(m: Message, state: FSMContext):
     new_name = m.text
     await state.update_data(new_name=new_name)
-    await m.bot.send_message(text='Its pretty isnt it? Next step is new users role', chat_id=m.chat.id)
+    await m.bot.send_message(text='Its pretty isnt it? Next step is new users status. Rate it from 1 to 5', chat_id=m.chat.id)
     await Admin_adding_user.user_role.set()
 
 
 async def new_user_role(m: Message, state: FSMContext):
     new_role = m.text
-    await state.update_data(new_role=new_role)
-    await m.reply('Ok. Thats great, but are you sure?',reply_markup=kb.inline_kb_user_full)
-    await Admin_adding_user.confirm.set()
+    if new_role.isdigit():
+        new_role = int(new_role)
+        if 1 <= new_role and 5 >= new_role:
+            await state.update_data(new_role=new_role)
+            await m.reply('Ok. Thats great, but are you sure?',reply_markup=kb.inline_kb_user_full)
+            await Admin_adding_user.confirm.set()
+        else:
+            await m.bot.send_message(text='Nice try. But 1,2,3,4,5 only allowed', chat_id=m.chat.id)
+    else:
+        await m.bot.send_message(text='Ohhh. seems great. But not realy', chat_id=m.chat.id)
 
 
-async def new_user_confirm(m: Message, state: FSMContext):
+async def new_user_confirm(m: Message, state: FSMContext, repo: Repo):
     data = await state.get_data()
+    log.info(data)
     new_id = data.get('new_id')
     new_name = data.get('new_name')
     new_role = data.get('new_role')
     await m.bot.send_message(text=f'Ok, {new_name} with id: {new_id} and role: {new_role} will be added', chat_id = m.message.chat.id)
+    await repo.add_user(**data)
     await state.finish()
 
 

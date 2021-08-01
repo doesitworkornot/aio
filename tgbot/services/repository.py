@@ -6,7 +6,7 @@ class Repo:
     def __init__(self, conn):
         self.conn = conn
 
-    async def add_user(self, name, status, telegram_id, **kwargs) -> None:
+    async def add_user(self, new_id, new_name, new_role, **kwargs) -> None:
         """Store user in DB"""
 
         sql = '''
@@ -14,7 +14,7 @@ class Repo:
             VALUES(%s, %s, %s)
             '''
         async with self.conn.cursor() as cur:
-            await cur.execute(sql, [name, status, telegram_id])
+            await cur.execute(sql, [new_name, new_role, new_id])
             await self.conn.commit()
 
     async def del_user(self, db_user_id) -> None:
