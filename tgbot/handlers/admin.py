@@ -32,6 +32,11 @@ class Admin_adding_user(StatesGroup):
     confirm = State()
 
 
+class Admin_del_user(StatesGroup):
+    user_id = State()
+    confirm = State()
+
+
 
 '''########################################
                 Handlers
@@ -47,14 +52,14 @@ async def cancel(m: Message, state: FSMContext):
 async def print_q(m: Message):
     log.info('starting print f() by %s(username) %s(first_name) id%s' %
         (m.from_user.username, m.from_user.first_name, m.from_user.id))
-    await m.bot.send_message(text='How much copies you want to print?.', chat_id = m.message.chat.id)
+    await m.bot.send_message(text='How much copies you want to print?.', chat_id=m.message.chat.id)
     await Admin_printer.pages.set()
 
 
 async def info(m: Message):
     log.info('getting info by %s(username) %s(first_name) id%s' %
         (m.from_user.username, m.from_user.first_name, m.from_user.id))
-    await m.bot.send_message(text='You gonna recieve ur data.', chat_id = m.message.chat.id)
+    await m.bot.send_message(text='You gonna recieve ur data.', chat_id=m.message.chat.id)
 
 
 async def add_user(m: Message, state: FSMContext):
@@ -106,20 +111,44 @@ async def new_user_confirm(m: Message, state: FSMContext, repo: Repo):
     new_id = data.get('new_id')
     new_name = data.get('new_name')
     new_role = data.get('new_role')
-    await m.bot.send_message(text=f'Ok, {new_name} with id: {new_id} and role: {new_role} will be added', chat_id = m.message.chat.id)
+    await m.bot.send_message(text=f'Ok, {new_name} with id: {new_id} and role: {new_role} will be added', chat_id=m.message.chat.id)
     await repo.add_user(**data)
     await state.finish()
 
 
 async def new_user_decline(m: Message, state: FSMContext):
-    await m.bot.send_message(text='Allright, operation aborted.', chat_id = m.message.chat.id)
+    await m.bot.send_message(text='Allright, operation aborted.', chat_id=m.message.chat.id)
     await state.finish()
 
 
-async def del_user(m: Message):
+async def del_user(m: Message, state: FSMContext):
     log.info('deleting user by %s(username) %s(first_name) id%s' %
         (m.from_user.username, m.from_user.first_name, m.from_user.id))
-    await m.reply('U gonna delete user')
+    await m.reply('Send me local id from database')
+    await Admin_del_user.user_id.set()
+
+
+async def del_user_id(m: Message, state: FSMContext):
+    user_id = m.text
+    if user_id.isdigit():
+        await state.update_data(user_id=user_id)
+        await m.reply('Ok. Thats great, but are you sure?',reply_markup=kb.inline_kb_del_full)
+        await Admin_del_user.confirm.set()
+
+
+async def del_user_confirm(m: Message, state: FSMContext, repo: Repo):
+    data = await state.get_data()
+    log.info(data)
+    user_id = data.get('user_id')
+    await m.bot.send_message(text='Good night, sweet prince', chat_id=m.message.chat.id)
+    await repo.del_user(user_id)
+    await state.finish()
+
+
+
+async def del_user_decline(m: Message, state: FSMContext):
+    await m.bot.send_message(text='Allright, operation aborted.', chat_id = m.message.chat.id)
+    await state.finish()
 
 
 async def admin_start(m: Message):
@@ -160,7 +189,7 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(admin_start, commands=['start'],state=None,
                                 role=UserRole.ADMIN)
 
-    ### Adding User Handlers
+    ### Adding And Deleting User Handlers
     dp.register_message_handler(new_user_id, state=Admin_adding_user.user_id,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(new_user_name,
@@ -168,6 +197,9 @@ def register_admin(dp: Dispatcher):
                                 role=UserRole.ADMIN)
     dp.register_message_handler(new_user_role,
                                 state=Admin_adding_user.user_role,
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(del_user_id,
+                                state=Admin_del_user.user_id,
                                 role=UserRole.ADMIN)
 
     ### Callbacks
@@ -177,3 +209,5 @@ def register_admin(dp: Dispatcher):
                                        role=UserRole.ADMIN)
     dp.register_callback_query_handler(new_user_confirm, text=['user_add_confirm'], state = Admin_adding_user.confirm, role=UserRole.ADMIN)
     dp.register_callback_query_handler(new_user_decline, text=['user_add_decline'], state = Admin_adding_user.confirm, role=UserRole.ADMIN)
+    dp.register_callback_query_handler(del_user_confirm, text=['user_del_confirm'], state = Admin_del_user.confirm, role=UserRole.ADMIN)
+    dp.register_callback_query_handler(del_user_decline, text=['user_del_decline'], state = Admin_del_user.confirm, role=UserRole.ADMIN)

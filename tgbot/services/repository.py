@@ -14,6 +14,7 @@ class Repo:
             VALUES(%s, %s, %s)
             '''
         async with self.conn.cursor() as cur:
+            print(new_role, new_name, new_id)
             await cur.execute(sql, [new_name, new_role, new_id])
             await self.conn.commit()
 
@@ -26,3 +27,16 @@ class Repo:
         async with self.conn.cursor() as cur:
             await cur.execute(sql, db_user_id)
             await self.conn.commit()
+
+    async def list_users(self):
+        '''Selects list of users'''
+
+        sql = '''
+            SELECT
+                id, name, status, telegram_id
+            FROM
+                tel_user
+            '''
+        async with self.conn.cursor() as cur:
+            await cur.execute(sql)
+            return await cur.fetchall()
