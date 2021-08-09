@@ -151,6 +151,11 @@ async def del_user_decline(m: Message, state: FSMContext):
     await state.finish()
 
 
+async def show_user(m: Message, repo: Repo):
+    userlist = await repo.list_users()
+    await m.answer(f'User List: {userlist}')
+
+
 async def admin_start(m: Message):
     await m.reply('Hello, dear admin! What do you want? If u dont know so lets just start with /help', reply_markup=kb.inline_kb_full)
 
@@ -187,6 +192,8 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(del_user, commands=['del'], state=None,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(admin_start, commands=['start'],state=None,
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(show_user, commands=['users'], state=None,
                                 role=UserRole.ADMIN)
 
     ### Adding And Deleting User Handlers
