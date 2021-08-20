@@ -32,10 +32,15 @@ class Repo:
         '''Selects list of users'''
 
         sql = '''
-            SELECT
-                id, name, status, telegram_id
-            FROM
-                tel_user
+            SELECT id, name, status, telegram_id FROM tel_user
+            '''
+        async with self.conn.cursor() as cur:
+            await cur.execute(sql)
+            return await cur.fetchall()
+
+    async def status_check(self, user_id):
+        sql = f'''
+            SELECT status FROM tel_user WHERE telegram_id = {user_id}
             '''
         async with self.conn.cursor() as cur:
             await cur.execute(sql)

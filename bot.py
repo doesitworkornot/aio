@@ -10,6 +10,7 @@ from tgbot.config import load_config
 from tgbot.filters.role import RoleFilter, AdminFilter
 from tgbot.handlers.admin import register_admin
 from tgbot.handlers.user import register_user
+from tgbot.handlers.nobody import register_nobody
 from tgbot.middlewares.db import DbMiddleware
 from tgbot.middlewares.role import RoleMiddleware
 
@@ -56,6 +57,7 @@ async def main():
 
     register_admin(dp)
     register_user(dp)
+    register_nobody(dp)
 
     # start
     try:

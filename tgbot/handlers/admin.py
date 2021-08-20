@@ -77,9 +77,12 @@ async def new_user_id(m: Message, state: FSMContext):
         await Admin_adding_user.user_name.set()
     elif m.text.isdigit():
         new_id = m.text
-        await  state.update_data(new_id=new_id)
-        await m.bot.send_message(text=f'You gonna add user wit id: {new_id}. Send me user name', chat_id=m.chat.id)
-        await Admin_adding_user.user_name.set()
+        if int(new_id) <= 2000000000 and int(new_id) >=1:
+            await  state.update_data(new_id=new_id)
+            await m.bot.send_message(text=f'You gonna add user wit id: {new_id}. Send me user name', chat_id=m.chat.id)
+            await Admin_adding_user.user_name.set()
+        else:
+            await m.bot.send_message(text='You failed. Try again. This number is way too big or could be negative', chat_id=m.chat.id)
     else:
         await m.bot.send_message(text='You failed. Try again. Or new user could set private forwarded message in settings, so ask him to send you his id', chat_id=m.chat.id)
 
@@ -87,7 +90,7 @@ async def new_user_id(m: Message, state: FSMContext):
 async def new_user_name(m: Message, state: FSMContext):
     new_name = m.text
     await state.update_data(new_name=new_name)
-    await m.bot.send_message(text='Its pretty isnt it? Next step is new users status. Rate it from 1 to 5', chat_id=m.chat.id)
+    await m.bot.send_message(text='Its pretty isnt it? Next step is new users status. Rate it 1 or 2, where 1 is common user and 2 is powerfull admin', chat_id=m.chat.id)
     await Admin_adding_user.user_role.set()
 
 
@@ -95,12 +98,12 @@ async def new_user_role(m: Message, state: FSMContext):
     new_role = m.text
     if new_role.isdigit():
         new_role = int(new_role)
-        if 1 <= new_role and 5 >= new_role:
+        if new_role == 1 or new_role == 2:
             await state.update_data(new_role=new_role)
             await m.reply('Ok. Thats great, but are you sure?',reply_markup=kb.inline_kb_user_full)
             await Admin_adding_user.confirm.set()
         else:
-            await m.bot.send_message(text='Nice try. But 1,2,3,4,5 only allowed', chat_id=m.chat.id)
+            await m.bot.send_message(text='Nice try. But only 1 and 2 allowed', chat_id=m.chat.id)
     else:
         await m.bot.send_message(text='Ohhh. seems great. But not realy', chat_id=m.chat.id)
 
