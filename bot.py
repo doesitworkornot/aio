@@ -4,7 +4,6 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.contrib.fsm_storage.redis import RedisStorage
 
 from tgbot.config import load_config
 from tgbot.filters.role import RoleFilter, AdminFilter
@@ -33,10 +32,8 @@ async def main():
     logger.info('Starting bot')
     config = load_config('bot.ini')
 
-    if config.tg_bot.use_redis:
-        storage = RedisStorage()
-    else:
-        storage = MemoryStorage()
+
+    storage = MemoryStorage()
 
     loop = asyncio.get_event_loop()
     pool = await create_pool(

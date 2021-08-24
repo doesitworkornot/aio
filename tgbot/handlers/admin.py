@@ -21,7 +21,8 @@ log = logging.getLogger(__name__)
 ########################################'''
 
 class Admin_printer(StatesGroup):
-    pages = State()
+    copies = State()
+    file = State()
     confirm = State()
 
 
@@ -53,7 +54,25 @@ async def print_q(m: Message):
     log.info('starting print f() by %s(username) %s(first_name) id%s' %
         (m.from_user.username, m.from_user.first_name, m.from_user.id))
     await m.bot.send_message(text='How much copies you want to print?.', chat_id=m.message.chat.id)
-    await Admin_printer.pages.set()
+    await Admin_printer.copies.set()
+
+
+async def copies(m: Message, state: FSMContext):
+    copies = m.text
+    if copies.isdigit():
+        if int(copies)>=1 and int(copies)<=40:
+            await  state.update_data(copies=copies)
+            await m.bot.send_message(text=f'Ok. Next send me file, and try to send me file, not just a photo or smth else and printable file if its possible :)', chat_id=m.chat.id)
+            await Admin_printer.file.set()
+        else:
+            await m.bot.send_message(text='This is kinda big. I dont think that you are really need that much', chat_id=m.chat.id)
+    else:
+        await m.bot.send_message(text='Nice try. But i prefer some numbers. 4, 2 for example', chat_id=m.chat.id)
+
+
+async def file(m: Message, state: FSMContext):
+    print(m)
+
 
 
 async def info(m: Message):
@@ -211,6 +230,12 @@ def register_admin(dp: Dispatcher):
     dp.register_message_handler(del_user_id,
                                 state=Admin_del_user.user_id,
                                 role=UserRole.ADMIN)
+
+    ### Printer Main dialog
+    dp.register_message_handler(copies, state=Admin_printer.copies,
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(file, content_types=['document'],
+                                state=Admin_printer.file, role=UserRole.ADMIN)
 
     ### Callbacks
     dp.register_callback_query_handler(print_q, text=['print'],
