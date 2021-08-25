@@ -7,6 +7,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from tgbot.models.role import UserRole
 from tgbot.services.repository import Repo
 import tgbot.handlers.kb as kb
+import tgbot.services.fileprinter as fp
 
 
 import logging
@@ -70,8 +71,14 @@ async def copies(m: Message, state: FSMContext):
         await m.bot.send_message(text='Nice try. But i prefer some numbers. 4, 2 for example', chat_id=m.chat.id)
 
 
+async def not_file(m: Message):
+    await m.bot.send_message(text='On this stage you need to send file as file. On PC send without compression and on smartphone by using file manager', chat_id=m.chat.id)
+
+
 async def file(m: Message, state: FSMContext):
-    print(m)
+    file_name = m.document.file_name.split('.')
+    file_extension = str(file_name[-1]).lower()
+    if  file_extension not in fp.allowedfiles
 
 
 
@@ -233,6 +240,8 @@ def register_admin(dp: Dispatcher):
 
     ### Printer Main dialog
     dp.register_message_handler(copies, state=Admin_printer.copies,
+                                role=UserRole.ADMIN)
+    dp.register_message_handler(not_file, state=Admin_printer.file,
                                 role=UserRole.ADMIN)
     dp.register_message_handler(file, content_types=['document'],
                                 state=Admin_printer.file, role=UserRole.ADMIN)
