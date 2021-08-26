@@ -86,16 +86,24 @@ async def file(m: Message, state: FSMContext):
         else:
             await m.bot.send_message(text='Thats great. Are you really want to print this file?', reply_markup=kb.inline_kb_print_full, chat_id=m.chat.id)
             file_id = m.document.file_id
+            await  state.update_data(file_extension=file_extension)
             await  state.update_data(file_id=file_id)
             await Admin_printer.confirm.set()
 
 
 async def print_confirm(m: Message, state: FSMContext):
     await m.bot.send_message(text='Ok. Will be printed asap', chat_id=m.message.chat.id)
+    print_status = await fp.download(state, m)
+    if print_status == 0:
+        await m.bot.send_message(text='Successfully printed', chat_id=m.message.chat.id)
+    else:
+        await m.bot.send_message(text='Something went wrong. And its not your fault', chat_id=m.message.chat.id)
+    await state.finish()
 
 
 async def print_decline(m: Message, state: FSMContext):
     await m.bot.send_message(text='Declined', chat_id=m.message.chat.id)
+    await state.finish()
 
 
 
