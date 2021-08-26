@@ -78,7 +78,24 @@ async def not_file(m: Message):
 async def file(m: Message, state: FSMContext):
     file_name = m.document.file_name.split('.')
     file_extension = str(file_name[-1]).lower()
-    if  file_extension not in fp.allowedfiles
+    if file_extension not in fp.allowedfiles:
+        await m.bot.send_message(text='Unsupported file type. Try convert it to acceptable format, PDF will be best choice', chat_id=m.chat.id)
+    else:
+        if m.document.file_size >= 20971520:
+            await m.bot.send_message(text='Seems file is too big. I cant download :(', chat_id=m.chat.id)
+        else:
+            await m.bot.send_message(text='Thats great. Are you really want to print this file?', reply_markup=kb.inline_kb_print_full, chat_id=m.chat.id)
+            file_id = m.document.file_id
+            await  state.update_data(file_id=file_id)
+            await Admin_printer.confirm.set()
+
+
+async def print_confirm(m: Message, state: FSMContext):
+    await m.bot.send_message(text='Ok. Will be printed asap', chat_id=m.message.chat.id)
+
+
+async def print_decline(m: Message, state: FSMContext):
+    await m.bot.send_message(text='Declined', chat_id=m.message.chat.id)
 
 
 
@@ -255,3 +272,5 @@ def register_admin(dp: Dispatcher):
     dp.register_callback_query_handler(new_user_decline, text=['user_add_decline'], state = Admin_adding_user.confirm, role=UserRole.ADMIN)
     dp.register_callback_query_handler(del_user_confirm, text=['user_del_confirm'], state = Admin_del_user.confirm, role=UserRole.ADMIN)
     dp.register_callback_query_handler(del_user_decline, text=['user_del_decline'], state = Admin_del_user.confirm, role=UserRole.ADMIN)
+    dp.register_callback_query_handler(print_decline, text=['print_decline'], state = Admin_printer.confirm, role=UserRole.ADMIN)
+    dp.register_callback_query_handler(print_confirm, text=['print_confirm'], state = Admin_printer.confirm, role=UserRole.ADMIN)

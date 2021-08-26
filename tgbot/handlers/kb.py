@@ -19,3 +19,8 @@ inline_kb_user_full.add(InlineKeyboardButton('No, just a miss click', callback_d
 inline_btn_del_confirm = InlineKeyboardButton('Yes, im sure', callback_data = 'user_del_confirm')
 inline_kb_del_full = InlineKeyboardMarkup(row_width=2).add(inline_btn_del_confirm)
 inline_kb_del_full.add(InlineKeyboardButton('No, just a miss click', callback_data='user_del_decline'))
+
+
+inline_btn_print_confirm = InlineKeyboardButton('Yes, im sure', callback_data = 'print_confirm')
+inline_kb_print_full = InlineKeyboardMarkup(row_width=2).add(inline_btn_print_confirm)
+inline_kb_print_full.add(InlineKeyboardButton('No, Ive got a problem with that', callback_data='print_decline'))
