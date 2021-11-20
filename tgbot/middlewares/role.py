@@ -12,14 +12,14 @@ class RoleMiddleware(LifetimeControllerMiddleware):
         self.admin_id = admin_id
 
     async def pre_process(self, obj, data, *args):
-        user_id = obj.from_user.id
         if not hasattr(obj, 'from_user'):
             data['role'] = None
         elif obj.from_user.id == self.admin_id:
             data['role'] = UserRole.ADMIN
         else:
+            user_id = obj.from_user.id
             role = await data['repo'].status_check(user_id)
-            role = int(''.join(map(str, role[0]))) #####I HATE TUPLES SO MUCH HHHHFSDGLKHJDFGSHJKJSKHLDGFJHKSDFGJLHKHJLKFGDHJLKSDHJGKLSDFLKJHGSDHJFKGHSDG
+            role = int(role[0][0]) #####I HATE TUPLES SO MUCH HHHHFSDGLKHJDFGSHJKJSKHLDGFJHKSDFGJLHKHJLKFGDHJLKSDHJGKLSDFLKJHGSDHJFKGHSDG
             if role == 2:
                 data['role'] = UserRole.ADMIN
             elif role == 1:
